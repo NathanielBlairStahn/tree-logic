@@ -9,6 +9,13 @@
 
   <script>
     submit = function(){
+      $.post({
+        url: "/identify",
+        contentType: "",
+        data: "",
+        success: function(result){
+        }
+      })
 	  }
   </script>
 
@@ -24,15 +31,16 @@
 
     <h1>Identify tree species from images</h1>
 
-    <h3>Upload an image file or enter a link</h3>
+    <h3>Upload an image file</h3><!-- or enter a link to an image</h3>-->
 
-    <div>
-    <input type="file" placeholder="filename of image" id="image_file">
-    <label for="image_file">Image file</label>
-
-    <input type="url" placeholder="url of image" id="image_url">
-    <label for="image_url">Link to image</label>
-    </div>
+    <!--<form action="submit();">
+      <label for="image_file">Image file</label>-->
+      <input type="file" name="image" id="image_file">
+      <!--<label for="image_url">Link to image</label>
+      <input type="url" name="image" placeholder="url of image" id="image_url">
+      -->
+      <!-- <input type="submit" value="Submit"> -->
+    <!--</form>-->
 
     <button onclick="submit();">Submit Image</button>
 

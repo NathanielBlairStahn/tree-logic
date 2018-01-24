@@ -1,11 +1,18 @@
 from flask import Flask, render_template, request, jsonify
+from model import ImageClassifier
 #import numpy as np
 
 app = Flask(__name__)
+classifier = ImageClassifier()
 
 @app.route('/')
 def index():
     return render_template('identifier.html')
+
+@app.route('/identify', methods=['POST'])
+def identify():
+    predictions = None
+    return predictions
 
 if __name__ == '__main__':
     #threaded=True creates separate thread for each person who visits website
