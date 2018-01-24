@@ -1,0 +1,41 @@
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+
+  <title>Tree Species Identifier</title>
+  <meta name="description" content="Tree species identifier">
+  <meta name="author" content="Nathaniel Blair-Stahn">
+
+  <script>
+    submit = function(){
+	  }
+  </script>
+
+  <style>
+    .hidden {
+	  display: none;
+	  }
+  </style>
+
+</head>
+
+<body>
+
+    <h1>Identify tree species from images</h1>
+
+    <h3>Upload an image file or enter a link</h3>
+
+    <div>
+    <input type="file" placeholder="filename of image" id="image_file">
+    <label for="image_file">Image file</label>
+
+    <input type="url" placeholder="url of image" id="image_url">
+    <label for="image_url">Link to image</label>
+    </div>
+
+    <button onclick="submit();">Submit Image</button>
+
+    <p><span class="hidden"></span></p>
+
+</body>
+</html>
