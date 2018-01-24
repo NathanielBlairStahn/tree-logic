@@ -1,4 +1,6 @@
 from flask import Flask, render_template, request, jsonify
+import io
+from PIL import Image
 from model import ImageClassifier
 #import numpy as np
 
@@ -11,7 +13,9 @@ def index():
 
 @app.route('/identify', methods=['POST'])
 def identify():
-    predictions = None
+    image = request.files['image'].read()
+    img_bytes = io.BytesIO(image)
+    predictions = classifier.predict_one(image)
     return predictions
 
 if __name__ == '__main__':
