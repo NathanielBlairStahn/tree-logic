@@ -15,7 +15,7 @@ def index():
 def identify():
     image = request.files['image'].read()
     img_bytes = io.BytesIO(image)
-    predictions = classifier.predict_one(image)
+    predictions = classifier.predict(image)
     return predictions
 
 if __name__ == '__main__':
