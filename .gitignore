@@ -1,5 +1,5 @@
 # Don't upload image files
-tree_photos/
+tree_photos/*/*
 
 # Mac OS files
 .DS_Store
