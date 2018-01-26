@@ -19,9 +19,13 @@ def remove_duplicate_images(directory):
     #images that have the same hash
     for image_filename in os.listdir(directory):
         image_path = os.path.join(directory, image_filename)
-        img = Image.open(image_path)
-        h = str(imagehash.phash(img))
-        image_dict[h].append(image_path)
+        try:
+            img = Image.open(image_path)
+            h = str(imagehash.phash(img))
+            image_dict[h].append(image_path)
+        except OSError:
+            print("Cannot open file: {}".format(image_path))
+
 
     #Find all hashes that had more than one image, and remove duplicates
     for hash_val, image_paths in image_dict.items():
@@ -51,8 +55,8 @@ if __name__=="__main__":
     #Ran this on Thurs 1/25 around 8:20pm
     #remove_duplicate_images('tree_photos/pseudotsuga menziesii/')
     base_directory = 'tree_photos/'
-    subdirectories = ['acer macrophylum/', 'platanus acerifolia/']
-    directories = [os.path.join(base_directory, subdirctory)
-                    for directory in directories]
+    subdirectories = ['acer macrophylum', 'platanus acerifolia']
+    directories = [os.path.join(base_directory, subdirectory)
+                    for subdirectory in subdirectories]
     for directory in directories:
         remove_duplicate_images(directory)
