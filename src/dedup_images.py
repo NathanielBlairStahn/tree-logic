@@ -4,13 +4,12 @@ import os
 from collections import defaultdict
 
 
-def remove_duplicate_images(directory):
-    '''
-    Removes duplicate images from the given directory. All duplicate
-    images after the first occurrence in the directory are removed.
 
-    INPUT: list of strings (path names)
-    OUTPUT: None
+def create_image_dict(directory):
+    '''
+    INPUT: directory (string) containing image files to hash.
+    RETURNS: a dictionary mapping hash values of images in the directory
+    to a list of images with the same hash.
     '''
     # Dictionary to map hash values to image files
     image_dict = defaultdict(list)
@@ -25,6 +24,20 @@ def remove_duplicate_images(directory):
             image_dict[h].append(image_path)
         except OSError:
             print("Cannot open file: {}".format(image_path))
+
+    return image_dict
+
+
+def remove_duplicate_images(directory):
+    '''
+    Removes duplicate images from the given directory. All duplicate
+    images after the first occurrence in the directory are removed.
+
+    INPUT: list of strings (path names)
+    OUTPUT: None
+    '''
+    # Dictionary to map hash values to image files
+    image_dict = create_image_dict(directory)
 
 
     #Find all hashes that had more than one image, and remove duplicates
