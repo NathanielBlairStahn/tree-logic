@@ -1,0 +1,9 @@
+Folder statuses:
+
+Deduped and cleaned:
+picea_sitchensis
+platanus_acerifolia
+acer_macrophylum
+
+
+Deduped but not fully cleaned:
