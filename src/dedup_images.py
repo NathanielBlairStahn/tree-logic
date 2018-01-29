@@ -1,4 +1,6 @@
 from PIL import Image
+#Hash images using the ImageHash library
+#https://pypi.python.org/pypi/ImageHash
 import imagehash
 import os
 from collections import defaultdict
@@ -20,6 +22,9 @@ def create_image_dict(directory):
         image_path = os.path.join(directory, image_filename)
         try:
             img = Image.open(image_path)
+            #Use 'perception hash' to compute the hash of an image: http://www.phash.org/
+            #phash  uses the Discrete Cosine Transform to convert images into
+            #frequency space
             h = str(imagehash.phash(img))
             image_dict[h].append(image_path)
         except OSError:
