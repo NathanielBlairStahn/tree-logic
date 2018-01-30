@@ -7,3 +7,12 @@ acer_macrophylum
 
 
 Deduped but not fully cleaned:
+pseudotsuga_menziesii
+thuja_plicata
+tilia_cordata
+
+
+Not deduped or cleaned:
+alnus_rubra
+betula_papyrifera
+cedrus_libani

@@ -1,6 +1,10 @@
 # Don't upload image files
 tree_photos/*/*
 
+# Geckodriver log from web scraping
+# (Oh, this was already caught by *.log under 'Django stuff')
+geckodriver.log
+
 # Mac OS files
 .DS_Store
 
