@@ -1,6 +1,9 @@
 # Don't upload image files
 tree_photos/*/*
 
+# Don't upload .csv file containing extracted features
+tree_images.csv
+
 # Geckodriver log from web scraping
 # (Oh, this was already caught by *.log under 'Django stuff')
 geckodriver.log
