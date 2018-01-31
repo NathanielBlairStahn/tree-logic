@@ -62,6 +62,7 @@ class ImageClassifier():
 
                 #If skip_duplicates is True, check whether the dataframe already has an image with
                 #the same hash, and only add it if not.
+                #NOTE: Add an option to update file path for same hash -- in case original was deleted
                 if skip_duplicates and p_hash in image_df['p_hash'].values:
                     print("Dataframe already contains an image with this hash value: {}".format(new_row))
                     continue
