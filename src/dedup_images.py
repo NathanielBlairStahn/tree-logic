@@ -73,7 +73,7 @@ if __name__=="__main__":
     #Ran this on Thurs 1/25 around 8:20pm
     #remove_duplicate_images('tree_photos/pseudotsuga menziesii/')
     base_directory = 'tree_photos/'
-    subdirectories = ['acer_macrophylum']
+    subdirectories = ['thuja_plicata', 'acer_macrophylum']
     directories = [os.path.join(base_directory, subdirectory)
                     for subdirectory in subdirectories]
     for directory in directories:
