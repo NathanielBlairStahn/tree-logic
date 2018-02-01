@@ -7,14 +7,19 @@ from collections import defaultdict
 
 
 
-def create_image_dict(directory):
+def image_hashes_to_paths(directory, image_dict = defaultdict(list)):
     '''
-    INPUT: directory (string) containing image files to hash.
-    RETURNS: a dictionary mapping hash values of images in the directory
-    to a list of images with the same hash.
+    INPUTS:
+        directory (string) - name of the directory containing image files to hash.
+        image_dict (ddefaultdict(list)) - a dictionary mapping previously found
+        image hashes to a list of their paths. If no dictionary is given, a new
+        one is created.
+
+    RETURNS: The updated default dictionary mapping hash values of images in the directory
+    to a list of image paths with the same hash.
     '''
-    # Dictionary to map hash values to image files
-    image_dict = defaultdict(list)
+    # # Dictionary to map hash values to image files
+    # image_dict = defaultdict(list)
 
     #Loop through all images in the directory, and make lists of
     #images that have the same hash
@@ -33,16 +38,16 @@ def create_image_dict(directory):
     return image_dict
 
 
-def remove_duplicate_images(directory):
+def remove_duplicate_images(image_dict):
     '''
-    Removes duplicate images from the given directory. All duplicate
-    images after the first occurrence in the directory are removed.
+    Removes duplicate images found in image_dict. All duplicate
+    images after the first occurrence in the list of repeats are removed.
 
-    INPUT: list of strings (path names)
+    INPUT: directory (string) - path of directory to remove images from
     OUTPUT: None
     '''
-    # Dictionary to map hash values to image files
-    image_dict = create_image_dict(directory)
+    # # Dictionary to map hash values to image files
+    # image_dict = create_image_dict(directory)
 
 
     #Find all hashes that had more than one image, and remove duplicates
@@ -77,4 +82,5 @@ if __name__=="__main__":
     directories = [os.path.join(base_directory, subdirectory)
                     for subdirectory in subdirectories]
     for directory in directories:
-        remove_duplicate_images(directory)
+        image_dict = image_hashes_to_paths(directory)
+        remove_duplicate_images(image_dict)
