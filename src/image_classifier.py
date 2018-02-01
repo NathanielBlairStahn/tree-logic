@@ -15,7 +15,19 @@ class ImageClassifier():
             feature_extractor = InceptionV3(include_top=False
                                             , weights='imagenet'
                                             , pooling='avg')
+
+            self.num_features = feature_extractor.output.shape[1].value #=2048
+            self.feature_columns = ['incv3_out_{}'.format(i)
+                            for i in range(num_features)]
+            #InceptionV3 takes in images of size 299x299
             self.target_size = (299,299)
+            #Rescale colors to be in range [0,1]. See:
+            #https://blog.keras.io/building-powerful-image-classification-models-using-very-little-data.html
+            #https://www.linkedin.com/pulse/keras-image-preprocessing-scaling-pixels-training-adwin-jahn/
+            #https://github.com/Arsey/keras-transfer-learning-for-oxford102/issues/1
+            #It looks like this might not matter unless we want to train a neural
+            #network on the images, but I'm not sure...
+            self.rescale_factor = 1.0/255
 
         self.feature_extractor = feature_extractor
         self.predictor = predictor
@@ -70,21 +82,28 @@ class ImageClassifier():
                 image_df.loc[row_num] = new_row
                 row_num += 1
 
-    def extract_features(self, image_file_df, base_directory, ):
+    def extract_features_from_image_paths(self, image_file_df, base_directory, ):
         #Create array to store each image as a 3-tensor
         image_array = np.empty((len(image_df), 299, 299, 3))
         print('Loading images...')
-        for row in image_df.index:
-            image_path = os.path.join(base_directory, image_df.loc[row,'species'], image_df.loc[row,'filename'])
+        for row_idx in image_df.index:
+            image_path = os.path.join(base_directory,
+                image_df.loc[row_idx,'species'],
+                image_df.loc[row_idx,'filename'])
+
             img = image.load_img(image_path, target_size=(299,299))
-            image_array[row] = image.img_to_array(img)
-            #image_array_df.iloc[row] = image.img_to_array(img)
+            image_array[row_idx] = image.img_to_array(img)
+
+        #Rescale all RGB values in the image array
+        #self.rescale_factor should probably be either 1
+        #to keep values the same, or 1/255 to rescale to [0,1].
+        image_array = image_array * self.rescale_factor
 
         #print('Images loaded. Extracting features...')
         features = self.extract_features(image_array)
 
         print('Features extracted. Returning new dataframe.')
-        features_df = pd.DataFrame(features, columns=feature_columns)
+        features_df = pd.DataFrame(features, columns=self.feature_columns)
 
         return image_df.join(features_df)
 
