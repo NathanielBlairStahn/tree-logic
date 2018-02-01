@@ -33,7 +33,14 @@ class ImageClassifier():
         self.predictor = predictor
         self.image_extensions = ['.png', '.jpg', '.jpeg']
 
-    def add_images_to_df(self, image_df, base_directory, species_names=None, skip_duplicates=False):
+    def add_images_to_df(self,
+                         image_df,
+                         base_directory,
+                         label_col='species',
+                         file_col='filename',
+                         hash_fcn=('p_hash', imagehash.phash),
+                         species_names=None,
+                         skip_duplicates=False):
     #If no species names are passed, use all subfolders of the base folder as species names
     if species_names is None:
         with os.scandir(base_directory) as base_contents:
@@ -64,12 +71,12 @@ class ImageClassifier():
                 #Note that this hash SHOULDN'T change if the image is loaded in with a target_size
                 #different from (299,299), but it's probably best to always use the same target size
                 #just to be safe.
-                p_hash = str(imagehash.phash(img))
+                hash_val = str(hash_fcn[1](img))
 
                 #Create a new row containing the data for the current file
-                new_row = pd.Series({'p_hash': p_hash
-                                    , 'filename': dir_entry.name
-                                    , 'species': species_name
+                new_row = pd.Series({hash_fcn[0]: hash_val
+                                    , file_col: dir_entry.name
+                                    , label_col: species_name
                                     , 'tags': ''})
 
                 #If skip_duplicates is True, check whether the dataframe already has an image with
@@ -82,14 +89,14 @@ class ImageClassifier():
                 image_df.loc[row_num] = new_row
                 row_num += 1
 
-    def extract_features_from_image_paths(self, image_file_df, base_directory, ):
+    def extract_features_from_image_paths(self, image_file_df, base_directory, label_col='species', file_col='filename'):
         #Create array to store each image as a 3-tensor
         image_array = np.empty((len(image_df), 299, 299, 3))
         print('Loading images...')
         for row_idx in image_df.index:
             image_path = os.path.join(base_directory,
-                image_df.loc[row_idx,'species'],
-                image_df.loc[row_idx,'filename'])
+                image_df.loc[row_idx, label_col],
+                image_df.loc[row_idx,file_col])
 
             img = image.load_img(image_path, target_size=(299,299))
             image_array[row_idx] = image.img_to_array(img)
@@ -99,7 +106,7 @@ class ImageClassifier():
         #to keep values the same, or 1/255 to rescale to [0,1].
         image_array = image_array * self.rescale_factor
 
-        #print('Images loaded. Extracting features...')
+        print('Images loaded. Extracting features...')
         features = self.extract_features(image_array)
 
         print('Features extracted. Returning new dataframe.')
@@ -108,6 +115,17 @@ class ImageClassifier():
         return image_df.join(features_df)
 
     def extract_features(self, image_array):
+        '''
+        Returns the array of feature extracted from through InceptionV3
+        from an array of image data.
+
+        INPUT: image_array is a 4D array of images, of shape
+        (num_images, height, width, channels), which is
+        (num_images, 299, 299, 3) for Inception V3.
+
+        RETURNS: an array of float64 of size (num_images, num_features),
+        which is (num_images, 2048) for Inception V3.
+        '''
         features = self.feature_extractor.predict(image_array)
         return features
 
