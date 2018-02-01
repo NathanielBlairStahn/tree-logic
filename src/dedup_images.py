@@ -7,7 +7,9 @@ from collections import defaultdict
 
 
 
-def image_hashes_to_paths(directory, image_dict = defaultdict(list)):
+def image_hashes_to_paths(directory,
+                          image_dict = defaultdict(list),
+                          hash_fcn = imagehash.phash):
     '''
     INPUTS:
         directory (string) - name of the directory containing image files to hash.
@@ -30,7 +32,7 @@ def image_hashes_to_paths(directory, image_dict = defaultdict(list)):
             #Use 'perception hash' to compute the hash of an image: http://www.phash.org/
             #phash  uses the Discrete Cosine Transform to convert images into
             #frequency space
-            h = str(imagehash.phash(img))
+            h = str(hash_fcn(img))
             image_dict[h].append(image_path)
         except OSError:
             print("Cannot open file: {}".format(image_path))
@@ -43,7 +45,8 @@ def remove_duplicate_images(image_dict):
     Removes duplicate images found in image_dict. All duplicate
     images after the first occurrence in the list of repeats are removed.
 
-    INPUT: directory (string) - path of directory to remove images from
+    INPUT: image_dict - dictionary of image paths to remove images from.
+    The key is the image's hash vlaue
     OUTPUT: None
     '''
     # # Dictionary to map hash values to image files
