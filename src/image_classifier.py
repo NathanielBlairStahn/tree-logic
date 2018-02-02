@@ -99,22 +99,19 @@ class ImageClassifier():
                 image_df.loc[row_idx,file_col])
 
             img = image.load_img(image_path, target_size=(299,299))
+            #The image array will contain unscaled RGB values in [0,255]
             image_array[row_idx] = image.img_to_array(img)
 
-        #Rescale all RGB values in the image array
-        #self.rescale_factor should probably be either 1
-        #to keep values the same, or 1/255 to rescale to [0,1].
-        image_array = image_array * self.rescale_factor
-
         print('Images loaded. Extracting features...')
-        features = self.extract_features(image_array)
+        #The default rescale=True will rescale RGB values to be in [0,1]
+        features = self.extract_features(image_array, rescale=True)
 
         print('Features extracted. Returning new dataframe.')
         features_df = pd.DataFrame(features, columns=self.feature_columns)
 
         return image_df.join(features_df)
 
-    def extract_features(self, image_array):
+    def extract_features(self, image_array, rescale=True):
         '''
         Returns the array of feature extracted from through InceptionV3
         from an array of image data.
@@ -126,6 +123,12 @@ class ImageClassifier():
         RETURNS: an array of float64 of size (num_images, num_features),
         which is (num_images, 2048) for Inception V3.
         '''
+        #Rescale all RGB values in the image array
+        #self.rescale_factor should probably be either 1
+        #to keep values the same, or 1/255 to rescale to [0,1].
+        if rescale:
+            image_array = image_array * self.rescale_factor
+
         features = self.feature_extractor.predict(image_array)
         return features
 
