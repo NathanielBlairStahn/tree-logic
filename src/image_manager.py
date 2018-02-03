@@ -127,3 +127,18 @@ class ImageManager():
 
                 image_df.loc[row_num] = new_row
                 row_num += 1
+
+    def get_image_paths(image_df, base_directory, indices=None):
+        if indices is None:
+            indices = image_df.index
+
+        directories = image_df.loc[indices, 'species']
+        filenames = image_df.loc[indices,'filename']
+
+        img_paths = [os.path.join(base_directory, directory, filename)
+                    for directory, filename in zip(directories, filenames)]
+
+    return img_paths
+
+    def generate_images_from_paths(img_paths):
+        return (image.load_img(path, target_size=(299,299)) for path in img_paths)
