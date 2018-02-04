@@ -3,13 +3,13 @@ import time
 import random
 import os
 
-from PIL import Image
+import PIL
 import io
 
 from image_manager import ImageManager
 
 class ImageScraper():
-    def __init__(self, image_manager):
+    def __init__(self, image_manager, random_sleep=True):
         self.manager = image_manager
 
         # Create zombie browsers
@@ -17,19 +17,27 @@ class ImageScraper():
         self.photo_browser = Firefox()
 
         #random.gammavariate(alpha=2, beta=2) #mean=alpha/beta
+        self.timer = random.gammavariate if random_sleep else None
+        self.alpha = 2 #alpha parameter for the gamma random variable
+
+    def get_time(self, mean_time):
+        if self.timer:
+            return self.timer(alpha=self.alpha, beta=self.alpha / mean_time)
+        else:
+            return mean_time
 
     def search_for_items(self, search_term):
         self.browser.get("https://images.google.com/")
         #time.sleep(2)
-        time.sleep(random.gammavariate(alpha=2, beta=1))
+        time.sleep(get_time(2))
         elem = self.browser.switch_to_active_element()
         search_box = elem
         search_box.click()
         #time.sleep(1)
-        time.sleep(random.gammavariate(alpha=2, beta=2))
+        time.sleep(get_time(1))
         search_box.send_keys(search_term)
         #time.sleep(1)
-        time.sleep(random.gammavariate(alpha=2, beta=2))
+        time.sleep(get_time(1))
         search_box.send_keys('\n')
 
     def find_images(self):
@@ -44,22 +52,31 @@ class ImageScraper():
         _ = image.location_once_scrolled_into_view
         image_url = image.get_attribute('src')
         self.photo_browser.get(image_url)
+        #image will be an object of type
+        #<class selenium.webdriver.remote.webelement.WebElement>
         image = self.photo_browser.find_element_by_css_selector(
             "img")
+        #The screenshot_as_png @property of the WebElement object
+        #returns a screenshot of the element as binary data of type
+        #<class bytes>
         image_png = image.screenshot_as_png
-        #Check if we already have an image with the same hash value
-        PIL_image = Image.open(io.BytesIO(image_png))
-        if not self.image_manager.hash_exists(PIL_image):
+        #To get a PIL object that we can pass to the image manager
+        #and compute a hash value from we need to open the bytes by
+        #first converting them using BytesIO.
+        PIL_image = PIL.Image.open(io.BytesIO(image_png))
+        #Check if we have already found an image with the same hash value
+        if not self.image_manager.knows_image(PIL_image):
             label = "_".join(search_term.lower().split())
             filepath = os.path.join(directory, 'image_{label}_{i}.png')
             # filepath = f'{directory}/image_{label}_{i}.png'
             with open(filepath, 'wb') as f:
                 f.write(image_png)
+            #Presumably this would also work if we wrote the PIL object...
 
     def scrape_images(self, images, directory, search_term, start_index=0):
         for i, image in enumerate(images):
             #time.sleep(1)
-            time.sleep(random.gammavariate(alpha=2, beta=2))
+            time.sleep(get_time(1))
             self.scrape_image(image, directory, search_term, i+start_index)
 
     def search_and_scrape(self, search_terms_for_directories, base_directory):
