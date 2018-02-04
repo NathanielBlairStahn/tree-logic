@@ -9,17 +9,35 @@ import imagehash
 from collections import defaultdict
 
 class ImageManager():
-    def __init__(self, base_directory, image_dict = defaultdict(list)):
+    def __init__(self, base_directory,
+                 image_dict = None,
+                 image_df = None):
         self.image_extensions = ['.png', '.jpg', '.jpeg']
-        self.base_directory = 'tree_photos'
+        self.base_directory = base_directory #'tree_photos'
         self.hash_fcn = imagehash.phash
 
+        #Define the columns in the DataFrame
         self.label_col = 'species'
         self.file_col = 'filename'
         self.hash_col = 'p_hash'
+        columns = [self.hash_col, self.file_col, self.label_col]
 
-        self.image_dict = image_dict
-        self.image_df = None
+        #Initialize the image dictionary
+        if image_dict is None:
+            self.image_dict = defaultdict(list)
+        else:
+            self.image_dict = image_dict
+
+        #Initialize the image DataFrame
+        if image_df is None:
+            self.image_df = pd.DataFrame(columns=columns)
+        else:
+            self.image_df = image_df
+
+        if len(self.image_dict) == 0 and len(self.image_df) == 0:
+            self.synced = True
+        else:
+            self.synced = False
 
     def knows_image(self, PIL_image):
         '''
@@ -87,7 +105,7 @@ class ImageManager():
                 self.image_dict[hash_val] = image_paths[0:1]
 
 
-    def add_images_to_df(self,
+    def sync_images(self,
                          image_df,
                          base_directory,
                          label_col='species',
