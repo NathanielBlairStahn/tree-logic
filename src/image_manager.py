@@ -6,15 +6,18 @@ import os
 from PIL import Image
 import imagehash
 
+#from keras.preprocessing import image
+
 from collections import defaultdict
 
 class ImageManager():
     def __init__(self, base_directory,
-                 image_dict = None,
                  image_df = None):
         self.image_extensions = ['.png', '.jpg', '.jpeg']
         self.base_directory = base_directory #'tree_photos'
         self.hash_fcn = imagehash.phash
+
+        #self.target_size = (299,299)
 
         #Define the columns in the DataFrame
         self.label_col = 'species'
@@ -22,11 +25,12 @@ class ImageManager():
         self.hash_col = 'p_hash'
         columns = [self.hash_col, self.file_col, self.label_col]
 
-        #Initialize the image dictionary
-        if image_dict is None:
-            self.image_dict = defaultdict(list)
-        else:
-            self.image_dict = image_dict
+        # #Initialize the image dictionary
+        # if image_dict is None:
+        #     self.image_dict = defaultdict(list)
+        # else:
+        #     self.image_dict = image_dict
+        self.image_dict = defaultdict(list)
 
         #Initialize the image DataFrame
         if image_df is None:
@@ -34,10 +38,10 @@ class ImageManager():
         else:
             self.image_df = image_df
 
-        if len(self.image_dict) == 0 and len(self.image_df) == 0:
-            self.synced = True
-        else:
-            self.synced = False
+        # if len(self.image_dict) == 0 and len(self.image_df) == 0:
+        #     self.synced = True
+        # else:
+        #     self.synced = False
 
     def knows_image(self, PIL_image):
         '''
@@ -104,46 +108,99 @@ class ImageManager():
                 #Keep only first file in the dictionary
                 self.image_dict[hash_val] = image_paths[0:1]
 
+    def update_image_dict(self, subdirectories=None):
+        #If no subdirectories are passed, use all subfolders of the base folder as species names
+        if subdirectories is None:
+            with os.scandir(self.base_directory) as base_contents:
+                subdirectories = [entry.name for entry in base_contents if entry.is_dir()]
 
-    def sync_images(self,
-                         image_df,
-                         base_directory,
+        #Iterate through the species names, which are assumed to be subfolders of the base directory.
+        for subdirectory in subdirectories:
+
+            #Get the full path to the subdirectory
+            folder_path = os.path.join(base_directory, subdirectory)
+
+            #Get all the DirEntry objects in the folder, and add the relevant information to the dataframe
+            with os.scandir(folder_path) as dir_entries:
+                for dir_entry in dir_entries:
+                    #Skip anything that's not an image file
+                    if os.path.splitext(dir_entry.name)[1].lower() not in self.image_extensions:
+                        continue
+
+                    try:
+                        # #Use Keras to load the image file into a PIL image object with the correct target size
+                        # #for InceptionV3
+                        # img = image.load_img(dir_entry.path, target_size=(299,299))
+
+                        # It shouldn't matter whether we open the image with Keras or PIL,
+                        # or whether we resize the image on opening
+                        img = Image.open(dir_entry.path)
+
+
+                        #Refer to https://pypi.python.org/pypi/ImageHash for imagehash documentation.
+                        #imagehash.phash(img) computes the perception hash of the image (http://www.phash.org/).
+                        #Note that this hash SHOULDN'T change if the image is loaded in with a target_size
+                        #different from (299,299), but it's probably best to always use the same target size
+                        #just to be safe.
+                        hash_val = self.hash_fcn(img)
+
+                        if hash_val in self.image_dict and dir_entry.path in self.image_dict[hash_val]:
+                            #We already know about this image, so move to the next file
+                            continue
+                        else:
+                            #Image file is new, so add it's path (and the hash if we don't have it)
+                            self.image_dict[hash_val].append(dir_entry.path)
+                    except OSError:
+                        print("Cannot open file: {}".format(dir_entry.path))
+
+
+    def sync_images(self, subdirectories):
+        self.update_image_dict(subdirectories)
+
+    def add_images_to_df(self,
                          label_col='species',
                          file_col='filename',
                          hash_fcn=('p_hash', imagehash.phash),
                          subdirectories=None,
                          skip_duplicates=False):
-    #If no species names are passed, use all subfolders of the base folder as species names
+    #If no subdirectories are passed, use all subfolders of the base folder as species names
     if subdirectories is None:
-        with os.scandir(base_directory) as base_contents:
+        with os.scandir(self.base_directory) as base_contents:
             subdirectories = [entry.name for entry in base_contents if entry.is_dir()]
 
     #Get the current length of the dataframe -- we'll be adding rows to the end, one for each image file found
-    row_num = len(image_df)
+    row_num = len(self.image_df)
 
     #Iterate through the species names, which are assumed to be subfolders of the base directory.
     for subdirectory in subdirectories:
 
-        #Get the full path to the species folder
-        species_directory = os.path.join(base_directory, subdirectory)
+        #Get the full path to the subdirectory
+        folder_path = os.path.join(base_directory, subdirectory)
 
         #Get all the DirEntry objects in the folder, and add the relevant information to the dataframe
-        with os.scandir(species_directory) as dir_entries:
+        with os.scandir(folder_path) as dir_entries:
             for dir_entry in dir_entries:
                 #Skip anything that's not an image file
-                if os.path.splitext(dir_entry.name)[1] not in self.image_extensions:
+                if os.path.splitext(dir_entry.name)[1].lower() not in self.image_extensions:
                     continue
 
                 #Use Keras to load the image file into a PIL image object with the correct target size
                 #for InceptionV3
-                img = image.load_img(dir_entry.path, target_size=(299,299))
+                img = image.load_img(dir_entry.path)#, target_size=self.target_size)
+
 
                 #Refer to https://pypi.python.org/pypi/ImageHash for imagehash documentation.
                 #imagehash.phash(img) computes the perception hash of the image (http://www.phash.org/).
                 #Note that this hash SHOULDN'T change if the image is loaded in with a target_size
                 #different from (299,299), but it's probably best to always use the same target size
                 #just to be safe.
-                hash_val = str(hash_fcn[1](img))
+                hash_val = self.hash_fcn(img)
+
+                if hash_val in self.image_dict and dir_entry.path in self.image_dict[hash_val]:
+                    #
+                    pass
+                else:
+                    self.image_dict[hash_val].append(dir_entry.path)
 
                 #Create a new row containing the data for the current file
                 new_row = pd.Series({hash_fcn[0]: hash_val
