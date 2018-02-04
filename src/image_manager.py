@@ -111,21 +111,21 @@ class ImageManager():
                          label_col='species',
                          file_col='filename',
                          hash_fcn=('p_hash', imagehash.phash),
-                         species_names=None,
+                         subdirectories=None,
                          skip_duplicates=False):
     #If no species names are passed, use all subfolders of the base folder as species names
-    if species_names is None:
+    if subdirectories is None:
         with os.scandir(base_directory) as base_contents:
-            species_names = [entry.name for entry in base_contents if entry.is_dir()]
+            subdirectories = [entry.name for entry in base_contents if entry.is_dir()]
 
     #Get the current length of the dataframe -- we'll be adding rows to the end, one for each image file found
     row_num = len(image_df)
 
     #Iterate through the species names, which are assumed to be subfolders of the base directory.
-    for species_name in species_names:
+    for subdirectory in subdirectories:
 
         #Get the full path to the species folder
-        species_directory = os.path.join(base_directory, species_name)
+        species_directory = os.path.join(base_directory, subdirectory)
 
         #Get all the DirEntry objects in the folder, and add the relevant information to the dataframe
         with os.scandir(species_directory) as dir_entries:
@@ -148,7 +148,7 @@ class ImageManager():
                 #Create a new row containing the data for the current file
                 new_row = pd.Series({hash_fcn[0]: hash_val
                                     , file_col: dir_entry.name
-                                    , label_col: species_name
+                                    , label_col: subdirectory
                                     , 'tags': ''})
 
                 #If skip_duplicates is True, check whether the dataframe already has an image with
