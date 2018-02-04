@@ -9,7 +9,7 @@ import imagehash
 from collections import defaultdict
 
 class ImageManager():
-    def __init__(self):
+    def __init__(self, base_directory, image_dict = defaultdict(list)):
         self.image_extensions = ['.png', '.jpg', '.jpeg']
         self.base_directory = 'tree_photos'
         self.hash_fcn = imagehash.phash
@@ -18,7 +18,19 @@ class ImageManager():
         self.file_col = 'filename'
         self.hash_col = 'p_hash'
 
-        self.image_dict = defaultdict(list)
+        self.image_dict = image_dict
+        self.image_df = None
+
+    def knows_image(self, PIL_image):
+        '''
+        Checks whether a PIL Image has a hash that matches one we've
+        already seen, as recorded in image_dict.
+
+        INPUT: PIL_image - a PIL Image object
+        RETURNS: True of the hash of the image is in the dictionary,
+            False otherwise.
+        '''
+        return self.hash_fcn(PIL_image) in self.image_dict
 
     def image_hashes_to_paths(directory,
                               image_dict = defaultdict(list),
@@ -52,7 +64,7 @@ class ImageManager():
 
         return image_dict
 
-    def remove_duplicate_images(image_dict):
+    def remove_duplicates(self):
         '''
         Removes duplicate images found in image_dict. All duplicate
         images after the first occurrence in the list of repeats are removed.
@@ -66,10 +78,13 @@ class ImageManager():
 
 
         #Find all hashes that had more than one image, and remove duplicates
-        for hash_val, image_paths in image_dict.items():
+        for hash_val, image_paths in self.image_dict.items():
             if len(image_paths) > 1:
+                #Remove any image files after the first
                 for image_path in image_paths[1:]:
                     os.remove(image_path)
+                #Keep only first file in the dictionary
+                self.image_dict[hash_val] = image_paths[0:1]
 
 
     def add_images_to_df(self,

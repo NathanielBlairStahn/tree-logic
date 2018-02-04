@@ -21,7 +21,7 @@ class ImageScraper():
         self.alpha = 2 #alpha parameter for the gamma random variable
 
     def get_time(self, mean_time):
-        if self.timer:
+        if self.timer is not None:
             return self.timer(alpha=self.alpha, beta=self.alpha / mean_time)
         else:
             return mean_time
