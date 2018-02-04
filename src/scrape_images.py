@@ -50,23 +50,23 @@ class ImageScraper():
         with open(filepath, 'wb') as f:
             f.write(image_png)
 
-    def scrape_images(images, directory, search_term, photo_browser, start_index=0):
+    def scrape_images(self, images, directory, search_term, start_index=0):
         for i, image in enumerate(images):
             #time.sleep(1)
             time.sleep(random.gammavariate(alpha=2, beta=2))
-            scrape_image(image, directory, search_term, i+start_index)
+            self.scrape_image(image, directory, search_term, i+start_index)
 
-    def search_and_scrape(search_terms_for_directories, base_directory):
+    def search_and_scrape(self, search_terms_for_directories, base_directory):
         for directory, search_terms in search_terms_for_directories.items():
             directory = os.path.join(base_directory, directory)
             for search_term in search_terms:
-                search_for_items(browser, search_term)
+                self.search_for_items(search_term)
                 n_images_scraped = 0
                 while True:
-                    images = find_images(browser)
+                    images = self.find_images()
                     if len(images) <= n_images_scraped:
                         break
-                    scrape_images(images[n_images_scraped:], directory, search_term, photo_browser,
+                    self.scrape_images(images[n_images_scraped:], directory, search_term,
                                   start_index=n_images_scraped)
                     n_images_scraped = len(images)
 
