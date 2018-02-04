@@ -4,6 +4,11 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import log_loss, accuracy_score, confusion_matrix
 
+class ModelEvaluator():
+    def __init__(self, model, image_df):
+        self.model = model
+        self.image_df = image_df
+
 def print_classifier_metrics(X_train, X_test, y_train, y_test, sklearn_model):
     y_pred_train = sklearn_model.predict_proba(X_train)
     y_pred_test = sklearn_model.predict_proba(X_test)
