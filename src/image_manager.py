@@ -25,6 +25,8 @@ class ImageManager():
         self.hash_col = 'p_hash'
         columns = [self.hash_col, self.file_col, self.label_col]
 
+        self.synced = False
+
         # #Initialize the image dictionary
         # if image_dict is None:
         #     self.image_dict = defaultdict(list)
@@ -37,6 +39,7 @@ class ImageManager():
             self.image_df = pd.DataFrame(columns=columns)
         else:
             self.image_df = image_df
+            self._sync_dict_with_df() #This initializes self.image_dict
 
         # if len(self.image_dict) == 0 and len(self.image_df) == 0:
         #     self.synced = True
@@ -108,7 +111,7 @@ class ImageManager():
                 #Keep only first file in the dictionary
                 self.image_dict[hash_val] = image_paths[0:1]
 
-    def update_image_dict(self, subdirectories=None):
+    def _update_image_dict(self, subdirectories=None):
         #If no subdirectories are passed, use all subfolders of the base folder as species names
         if subdirectories is None:
             with os.scandir(self.base_directory) as base_contents:
@@ -153,9 +156,67 @@ class ImageManager():
                     except OSError:
                         print("Cannot open file: {}".format(dir_entry.path))
 
+    # def sync_images(self, subdirectories):
+    #     self._update_image_dict(subdirectories)
+
+    def _sync_dict_with_df():
+        if self.synced:
+            return
+
+        self.image_dict = defaultdict(list,
+             {hash_val: os.path.join(base_directory, directory, filename)
+             for hash_val, directory, filename
+             in zip(self.image_df[self.hash_col],
+                    self.image_df[self.label_col],
+                    self.image_df[self.file_col]
+                    )
+            )
+        self.synced = True
 
     def sync_images(self, subdirectories):
-        self.update_image_dict(subdirectories)
+        self._sync_dict_with_df()
+
+        #If no subdirectories are passed, use all subfolders of the base folder as species names
+        if subdirectories is None:
+            with os.scandir(self.base_directory) as base_contents:
+                subdirectories = [entry.name for entry in base_contents if entry.is_dir()]
+
+        #Get the current length of the dataframe -- we'll be adding rows to the end, one for each image file found
+        row_num = len(self.image_df)
+
+        #Iterate through the species names, which are assumed to be subfolders of the base directory.
+        for subdirectory in subdirectories:
+
+            #Get the full path to the subdirectory
+            folder_path = os.path.join(base_directory, subdirectory)
+
+            #Get all the DirEntry objects in the folder, and add the relevant information to the dataframe
+            with os.scandir(folder_path) as dir_entries:
+                for dir_entry in dir_entries:
+                    #Skip anything that's not an image file
+                    if os.path.splitext(dir_entry.name)[1].lower() not in self.image_extensions:
+                        continue
+
+                    #Use Keras to load the image file into a PIL image object with the correct target size
+                    #for InceptionV3
+                    img = image.load_img(dir_entry.path)#, target_size=self.target_size)
+
+
+                    #Refer to https://pypi.python.org/pypi/ImageHash for imagehash documentation.
+                    #imagehash.phash(img) computes the perception hash of the image (http://www.phash.org/).
+                    #Note that this hash SHOULDN'T change if the image is loaded in with a target_size
+                    #different from (299,299), but it's probably best to always use the same target size
+                    #just to be safe.
+                    hash_val = self.hash_fcn(img)
+
+                    if hash_val in self.image_dict and dir_entry.path == self.image_dict[hash_val][0]:
+                        #We already know about this image and have its correct information
+                        #in the dataframe, so move on to the next file
+                        continue
+                    else:
+                        #Image file is new, so add its path (and the hash if we don't have it)
+                        self.image_dict[hash_val].append(dir_entry.path)
+
 
     def add_images_to_df(self,
                          label_col='species',
