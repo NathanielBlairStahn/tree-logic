@@ -3,6 +3,9 @@ import time
 import random
 import os
 
+from PIL import Image
+import io
+
 from image_manager import ImageManager
 
 class ImageScraper():
@@ -44,11 +47,14 @@ class ImageScraper():
         image = self.photo_browser.find_element_by_css_selector(
             "img")
         image_png = image.screenshot_as_png
-        label = "_".join(search_term.lower().split())
-        filepath = os.path.join(directory, 'image_{label}_{i}.png')
-        # filepath = f'{directory}/image_{label}_{i}.png'
-        with open(filepath, 'wb') as f:
-            f.write(image_png)
+        #Check if we already have an image with the same hash value
+        PIL_image = Image.open(io.BytesIO(image_png))
+        if not self.image_manager.hash_exists(PIL_image):
+            label = "_".join(search_term.lower().split())
+            filepath = os.path.join(directory, 'image_{label}_{i}.png')
+            # filepath = f'{directory}/image_{label}_{i}.png'
+            with open(filepath, 'wb') as f:
+                f.write(image_png)
 
     def scrape_images(self, images, directory, search_term, start_index=0):
         for i, image in enumerate(images):
