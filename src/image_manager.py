@@ -101,7 +101,7 @@ class ImageManager():
                 #Keep only first file in the dictionary
                 self.image_dict[hash_val] = image_paths[0:1]
 
-    def _sync_dict_with_df():
+    def _sync_dict_with_df(self):
         '''
         Internal method to ensure that the dictionary contains the same
         hashes and paths as the DataFrame.
@@ -169,7 +169,7 @@ class ImageManager():
         for subdirectory in subdirectories:
 
             #Get the full path to the subdirectory
-            folder_path = os.path.join(base_directory, subdirectory)
+            folder_path = os.path.join(self.base_directory, subdirectory)
 
             #Get all the DirEntry objects in the folder, and add the relevant information to the dataframe
             with os.scandir(folder_path) as dir_entries:
@@ -275,12 +275,9 @@ class ImageManager():
             folder_name = os.path.basename(folder_path)
             #Update the folder and filename in DataFrame
             #cols_to_update = [self.file_col, ]
-            self.image_df.loc[
-                self.image_df[self.hash_col] == h, self.file_col]] = filename
-            self.image_df.loc[
-                self.image_df[self.hash_col] == h, self.folder_col]] = folder_name
-            self.image_df.loc[
-                self.image_df[self.hash_col] == h, self.time_verified_col]] = pd.Timestamp.now()
+            self.image_df.loc[self.image_df[self.hash_col] == h, self.file_col] = filename
+            self.image_df.loc[self.image_df[self.hash_col] == h, self.folder_col] = folder_name
+            self.image_df.loc[self.image_df[self.hash_col] == h, self.time_verified_col] = pd.Timestamp.now()
 
         time_completed = pd.Timestamp.now()
 
@@ -305,7 +302,7 @@ class ImageManager():
         img_paths = [os.path.join(base_directory, directory, filename)
                     for directory, filename in zip(directories, filenames)]
 
-    return img_paths
+        return img_paths
 
     def generate_images_from_paths(img_paths):
         return (image.load_img(path, target_size=(299,299)) for path in img_paths)
