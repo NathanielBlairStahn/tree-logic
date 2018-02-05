@@ -14,10 +14,11 @@ import imagehash
 
 class ImageManager():
     def __init__(self, base_directory,
-                 image_df = None):
+                 image_df = None,
+                 hash_fcn = imagehash.phash):
         self.image_extensions = ['.png', '.jpg', '.jpeg']
         self.base_directory = base_directory #'tree_photos'
-        self.hash_fcn = imagehash.phash
+        self.hash_fcn = hash_fcn
 
         #self.target_size = (299,299)
 
@@ -27,6 +28,7 @@ class ImageManager():
         self.hash_col = 'p_hash'
         self.time_added_col = 'time_added'
         self.time_verified_col = 'time_verified'
+
         columns = [self.hash_col, self.file_col, self.label_col,
                     self.time_added_col, self.time_verified_col]
 
@@ -97,6 +99,14 @@ class ImageManager():
                 print("Cannot open file: {}".format(image_path))
 
         return image_dict
+
+    def get_duplicates(self):
+        '''
+        Returns the subdictionary of self.image_dict with hashes
+        that have more than one path listed.
+        '''
+        return {im_hash: paths for im_hash, paths
+                in self.image_dict.items() if len(paths) > 1}
 
     def remove_duplicates(self):
         '''
@@ -169,6 +179,12 @@ class ImageManager():
     #     self._update_image_dict(subdirectories)
 
     def _sync_dict_with_df():
+        '''
+        Internal method to ensure that the dictionary contains the same
+        hashes and paths as the DataFrame.
+        It's possible that if I do everything right, I won't actually
+        need to call this.
+        '''
         self.image_dict = {hash_val:
              os.path.join(base_directory, directory, filename)
              for hash_val, directory, filename
@@ -216,7 +232,8 @@ class ImageManager():
             with os.scandir(self.base_directory) as base_contents:
                 subdirectories = [entry.name for entry in base_contents if entry.is_dir()]
 
-        #Get the current length of the dataframe -- we'll be adding rows to the end, one for each image file found
+        #Get the current length of the dataframe -- we'll be adding rows to the end,
+        #one for each new image file found
         row_num = len(self.image_df)
 
         #Get the number of the current sync
@@ -280,11 +297,14 @@ class ImageManager():
                         #have recorded the new path if it was a duplicate
                         continue
 
-                    #At this point, we know we have found a new image, so add a
-                    #new row to the dataframe recording its location.
+                    #At this point, we know we have found a new image, so add the path
+                    #to the dictionary, and add a new row to the dataframe for this hash.
 
-                    timestamp = pd.Timestamp.now()
+                    #New hash with new path
+                    self.image_dict[hash_val] = [dir_entry.path]
+
                     #Create a new row containing the data for the current file
+                    timestamp = pd.Timestamp.now()
                     new_row = pd.Series({self.hash_col: hash_val
                                         , self.file_col: dir_entry.name
                                         , self.label_col: subdirectory
@@ -294,9 +314,16 @@ class ImageManager():
                     self.image_df.loc[row_num] = new_row
                     row_num += 1
 
-        time_completed = pd.Timestamp.now()
+        #Find all hashes with more than one path listed but have not been
+        #verified during this sync.
+        duplicates = self.get_duplicates()
+        self.image_df['']
 
-        return (time_started, time_completed)
+        time_completed = pd.Timestamp.now()
+        self.syncs_df.loc[sync_num, 'time_started'] = time_started
+        self.syncs_df.loc[sync_num, 'time_completed'] = time_completed
+
+        #return (time_started, time_completed)
 
     def add_images_to_df(self,
                          label_col='species',
