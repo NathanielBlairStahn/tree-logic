@@ -82,6 +82,8 @@ class ImageScraper():
     def search_and_scrape(self, search_terms_for_directories, base_directory):
         for directory, search_terms in search_terms_for_directories.items():
             directory = os.path.join(base_directory, directory)
+            if not os.path.exists(directory):
+                os.makedirs(directory)
             for search_term in search_terms:
                 self.search_for_items(search_term)
                 n_images_scraped = 0

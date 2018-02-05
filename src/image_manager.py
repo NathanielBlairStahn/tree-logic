@@ -109,7 +109,7 @@ class ImageManager():
         need to call this.
         '''
         self.image_dict = {hash_val:
-             os.path.join(base_directory, directory, filename)
+             [os.path.join(self.base_directory, directory, filename)]
              for hash_val, directory, filename
              in zip(self.image_df[self.hash_col],
                     self.image_df[self.folder_col],
@@ -117,7 +117,7 @@ class ImageManager():
                     )
             }
 
-    def sync_images(self, subdirectories):
+    def sync_images(self, subdirectories=None):
         '''
         Syncs the specified subdirectories of self.base_directory into the
         dataframe and dictionary.
