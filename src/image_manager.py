@@ -292,6 +292,16 @@ class ImageManager():
         lst[i] = lst[j]
         lst[j] = temp
 
+    def _get_folder_and_filename(image_path):
+        #Get the folder path and filename from the path
+        folder_path, filename = os.path.split(image_path)
+        #Strip off the base directory to get the folder name
+        folder_name = os.path.basename(folder_path)
+        return folder_name, filename
+
+    def update_path(self, image_hash, image_path):
+        pass
+
     def get_image_paths(image_df, base_directory, indices=None):
         if indices is None:
             indices = image_df.index
@@ -304,5 +314,6 @@ class ImageManager():
 
         return img_paths
 
-    def generate_images_from_paths(img_paths):
-        return (image.load_img(path, target_size=(299,299)) for path in img_paths)
+    def generate_images_from_paths(self, img_paths):
+        #return (image.load_img(path, target_size=(299,299)) for path in img_paths)
+        return (Image.open(path) for path in img_paths)
