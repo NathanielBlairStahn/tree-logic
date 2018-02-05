@@ -10,7 +10,7 @@ from image_manager import ImageManager
 
 class ImageScraper():
     def __init__(self, image_manager, random_sleep=True):
-        self.manager = image_manager
+        self.image_manager = image_manager
 
         # Create zombie browsers
         self.browser = Firefox()
@@ -29,15 +29,15 @@ class ImageScraper():
     def search_for_items(self, search_term):
         self.browser.get("https://images.google.com/")
         #time.sleep(2)
-        time.sleep(get_time(2))
+        time.sleep(self.get_time(2))
         elem = self.browser.switch_to_active_element()
         search_box = elem
         search_box.click()
         #time.sleep(1)
-        time.sleep(get_time(1))
+        time.sleep(self.get_time(1))
         search_box.send_keys(search_term)
         #time.sleep(1)
-        time.sleep(get_time(1))
+        time.sleep(self.get_time(1))
         search_box.send_keys('\n')
 
     def find_images(self):
@@ -76,12 +76,12 @@ class ImageScraper():
     def scrape_images(self, images, directory, search_term, start_index=0):
         for i, image in enumerate(images):
             #time.sleep(1)
-            time.sleep(get_time(1))
+            time.sleep(self.get_time(1))
             self.scrape_image(image, directory, search_term, i+start_index)
 
-    def search_and_scrape(self, search_terms_for_directories, base_directory):
+    def search_and_scrape(self, search_terms_for_directories):
         for directory, search_terms in search_terms_for_directories.items():
-            directory = os.path.join(base_directory, directory)
+            directory = os.path.join(self.image_manager.base_directory, directory)
             if not os.path.exists(directory):
                 os.makedirs(directory)
             for search_term in search_terms:
@@ -96,7 +96,8 @@ class ImageScraper():
                     n_images_scraped = len(images)
 
 if __name__=='main':
-    manager = ImageManager()
+    base_directory = '~/tree-logic/tree_photos'
+    manager = ImageManager(base_directory)
 
     search_terms_for_directories = {
         'betula_papyrifera': ['betula papyrifera']
@@ -105,6 +106,6 @@ if __name__=='main':
     #     ,'pseudotsuga_menziesii': ['pseudotsuga menziesii tree', 'douglas fir needles']
     }
 
-    base_directory = '~/tree-logic/tree_photos'
 
-    search_and_scrape(search_terms_for_directories, base_directory)
+
+    search_and_scrape(search_terms_for_directories)
