@@ -314,16 +314,63 @@ class ImageManager():
                     self.image_df.loc[row_num] = new_row
                     row_num += 1
 
-        #Find all hashes with more than one path listed but have not been
-        #verified during this sync.
-        duplicates = self.get_duplicates()
-        self.image_df['']
+        #Find all hashes with more than one path listed in the dictionary but
+        #that have not been verified during this sync. We need to update the
+        #paths for these hashes because:
+        #
+        # 1) Having more than one filepath listed means we found at least one valid
+        #  path during this sync that did not match the path in the DataFrame.
+        #
+        # 2) Being unverified during this sync means that none of the paths found
+        #  in this sync matched the path in the Dataframe.
+        #
+        #Therefore, we know we have at least one valid path for the hash, but it
+        #does not match what was in the DataFrame, so we should update the path
+        #to one we know is correct.
+
+        #Find hashes with multiple paths:
+        duplicates = set(self.get_duplicates().keys())
+        #Find hashes whose paths were unverified during this sync:
+        #The path was unverified during this sync if its recorded verification
+        #timestamp is earlier than the time when we started this sync.
+        unverified = self.image_df.loc[
+            self.image_df[self.time_verified_col] < time_started, self.hash_col]
+        #Take the intersection to find the hashes whose paths we need to update:
+        hashes_to_update = duplicates.intersection(unverified)
+
+        #To update the paths, we need to:
+        #1) Swap the 0th and 1st elments of self.image_dict[hash_val].
+        #2) Replace the folder and filename fields for the hash in the DataFrame.
+        #3) Update the verification time for the hash in the DataFrame.
+
+        for h in hashes_to_update:
+            #Swap the 0th filepath with the 1st
+            _swap_elements(self.image_df[h],0,1)
+            #Get the folder path and filename from the new path
+            folder_path, filename = os.path.split(self.image_df[h][0])
+            #Strip off the base directory to get the folder name
+            folder_name = os.path.basename(folder_path)
+            #Update the folder and filename in DataFrame
+            #cols_to_update = [self.file_col, ]
+            self.image_df.loc[
+                self.image_df[self.hash_col] == h, self.file_col]] = filename
+            self.image_df.loc[
+                self.image_df[self.hash_col] == h, self.label_col]] = folder_name
+            self.image_df.loc[
+                self.image_df[self.hash_col] == h, self.time_verified_col]] = pd.Timestamp.now()
 
         time_completed = pd.Timestamp.now()
+
+        #Record when the sync was started and completed
         self.syncs_df.loc[sync_num, 'time_started'] = time_started
         self.syncs_df.loc[sync_num, 'time_completed'] = time_completed
 
         #return (time_started, time_completed)
+
+    def _swap_elements(lst, i, j):
+        temp = lst[i]
+        lst[i] = lst[j]
+        lst[j] = temp
 
     def add_images_to_df(self,
                          label_col='species',
