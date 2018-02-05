@@ -30,7 +30,10 @@ class ImageManager():
         columns = [self.hash_col, self.file_col, self.label_col,
                     self.time_added_col, self.time_verified_col]
 
-        self.synced = False
+        #DataFrame to keep track of when files are synced
+        self.syncs_df = pd.DataFrame(columns = ['time_started', 'time_completed'])
+
+        #self.synced = False
 
         # #Initialize the image dictionary
         # if image_dict is None:
@@ -166,20 +169,46 @@ class ImageManager():
     #     self._update_image_dict(subdirectories)
 
     def _sync_dict_with_df():
-        if self.synced:
-            return
-
-        self.image_dict = {hash_val: os.path.join(
-             base_directory, directory, filename)
+        self.image_dict = {hash_val:
+             os.path.join(base_directory, directory, filename)
              for hash_val, directory, filename
              in zip(self.image_df[self.hash_col],
                     self.image_df[self.label_col],
                     self.image_df[self.file_col]
                     )
             }
-        self.synced = True
 
     def sync_images(self, subdirectories):
+        '''
+        Syncs the specified subdirectories of self.base_directory into the
+        dataframe and dictionary.
+
+        INPUT: subdirectories (list of strings) - list of subdirectories of
+        base_directory to sync into the dataframe.
+        RETURNS: (time_started, time_completed) - tuple of pd.Timestamps (?)
+        reperesenting when the syncing started and when it stopped.
+
+        When this function completes, the following are guaranteed:
+
+        1) Every unique image in the given subdirectories will have its hash
+        contained in the DataFrame, with its path being a valid path to a file
+        in one of the listed subdirectories.
+        2) The dictionary will contain every image hash listed in the DataFrame,
+        and the path listed in the DataFrame for that hash will be the first
+        path listed for the hash in the dictionary.
+        3) If multiple files in the listed subdirectories have the same image
+        hash, the paths to all of these files will be listed in the dictionary
+        for that hash; an arbitrary one of these paths will be listed first and
+        will math the path listed in the DataFrame.
+        4) If there was an image hash in the DataFrame (before sync_images was
+        called) that matched the hash of an image in the given subdirectories,
+        the path for that hash will be updated to match a valid path in the
+        given subdirectories. The old file path will be listed in the dictionary
+        for that hash, in a position after the first.
+        5) Any image hash in the DataFrame that does not match an image in the
+        given subdirectories will have the same path listed as before sync_images
+        was called.
+        '''
         self._sync_dict_with_df()
 
         #If no subdirectories are passed, use all subfolders of the base folder as species names
@@ -189,6 +218,12 @@ class ImageManager():
 
         #Get the current length of the dataframe -- we'll be adding rows to the end, one for each image file found
         row_num = len(self.image_df)
+
+        #Get the number of the current sync
+        sync_num = len(self.syncs_df)
+
+        #Record the time we start syncing
+        time_started = pd.Timestamp.now()
 
         #Iterate through the species names, which are assumed to be subfolders of the base directory.
         for subdirectory in subdirectories:
@@ -226,11 +261,18 @@ class ImageManager():
 
                     #Check if the dictionary contains this hash value.
                     #If so, the image has already been added to the dataframe,
-                    #with the first path listed in the dictionary.
+                    #and the first path listed in the dictionary is the one listed
+                    #in the dataframe.
                     if hash_val in self.image_dict:
-                        #If the current filepath is different from the first one listed,
-                        #we have found a duplicate, so add the new path.
-                        if dir_entry.path != self.image_dict[hash_val][0]:
+                        #If the current path matches the first listed (which is guaranteed
+                        #to be the same as the path in the DataFrame), mark that we verified
+                        #the path at the current time.
+                        if dir_entry.path == self.image_dict[hash_val][0]:
+                            self.image_df.loc[self.image_df[self.hash_col] == hash_val,
+                                              self.time_verified_col] = pd.Timestamp.now()
+                        else:
+                            #If the current filepath is different from the first one listed,
+                            #we have found a duplicate, so add the new path.
                             self.image_dict[hash_val].append(dir_entry.path)
 
                         #At this point, we can move on to the next file, because
@@ -249,8 +291,12 @@ class ImageManager():
                                         , self.time_added_col: timestamp
                                         , self.time_verified_col: timestamp
                                         })
-                    image_df.loc[row_num] = new_row
+                    self.image_df.loc[row_num] = new_row
                     row_num += 1
+
+        time_completed = pd.Timestamp.now()
+
+        return (time_started, time_completed)
 
     def add_images_to_df(self,
                          label_col='species',
