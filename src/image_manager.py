@@ -332,8 +332,30 @@ class ImageManager():
         folder_name = os.path.basename(folder_path)
         return folder_name, filename
 
-    def update_path(self, image_hash, image_path):
-        pass
+    # def update_path(self, image_hash, image_path):
+    #     timestamp = pd.Timestamp.now()
+    #     if image_hash in self.image_dict:
+    #         #Move current path to the end; we'll replace it with the new one
+    #         self.image_dict[image_hash].append(self.image_dict[image_hash][0])
+    #     else:
+    #         #Create a new path list if the hash doesn't already exist
+    #         self.image_dict = list()
+    #         #Record the time when
+    #         self.image_df.loc[self.image_df[self.hash_col] == image_hash, self.time_added_col] = timestamp
+    #     #Update the dictionary with the new path
+    #     self.image_dict[image_hash][0] = image_path
+    #
+    #     #Get the folder name and filename from the path
+    #     folder_name, filename = _get_folder_and_filename(image_path)
+    #     timestamp = pd.Timestamp.now()
+    #
+    #     pd.Series({self.folder_col: folder_name,
+    #                self.file_col: filename})
+    #
+    #     self.image_df.loc[
+    #         self.image_df[self.hash_col] == image_hash,
+    #         [self.folder_col, self.file_col]] = [folder_name, filename]
+
 
     def get_image_paths(image_df, base_directory, indices=None):
         if indices is None:
