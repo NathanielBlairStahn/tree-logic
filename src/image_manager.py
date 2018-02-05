@@ -14,7 +14,8 @@ import imagehash
 
 class ImageManager():
     def __init__(self, base_directory,
-                 image_df = None,
+                 image_df_path = None,
+                 syncs_df_path = None,
                  hash_fcn = imagehash.phash,
                  hash_col = 'p_hash',
                  file_col = 'filename',
@@ -35,9 +36,6 @@ class ImageManager():
         columns = [self.hash_col, self.file_col, self.folder_col,
                     self.time_added_col, self.time_verified_col]
 
-        #DataFrame to keep track of when files are synced
-        self.syncs_df = pd.DataFrame(columns = ['time_started', 'time_completed'])
-
         #self.synced = False
 
         # #Initialize the image dictionary
@@ -48,17 +46,51 @@ class ImageManager():
         #self.image_dict = defaultdict(list)
 
         #Initialize the image DataFrame
-        if image_df is None:
+        if image_df_path is None:
             self.image_df = pd.DataFrame(columns=columns)
             self.image_dict = {}
         else:
-            self.image_df = image_df
+            self.load_image_df(image_df_path)
             self._sync_dict_with_df() #This initializes self.image_dict
 
         # if len(self.image_dict) == 0 and len(self.image_df) == 0:
         #     self.synced = True
         # else:
         #     self.synced = False
+
+        #DataFrame to keep track of when files are synced
+        if syncs_df_path is None:
+            self.syncs_df = pd.DataFrame(columns = ['time_started', 'time_completed', 'folders'])
+        else:
+            self.load_syncs_df(syncs_df_path)
+
+    # def write_dfs(self, image_df_filename, syncs_df_filename):
+    #     self.image_df.to_csv(image_df_filename, sep='|')
+    #     self.syncs_df
+
+    def load_image_df(self, path):
+        image_df = pd.read_csv(path, sep='|', index_col=0)
+        image_df.loc[:,self.hash_col] = (
+            image_df[self.hash_col].apply(imagehash.hex_to_hash)
+            )
+        image_df.loc[:,[self.time_added_col, self.time_verified_col]] = (
+            image_df.loc[:,[self.time_added_col, self.time_verified_col]]
+            .applymap(pd.Timestamp)
+            )
+
+        self.image_df = image_df
+
+    def load_syncs_df(self, path):
+        syncs_df = pd.read_csv(path, sep='|', index_col=0)
+        syncs_df.loc[:,['time_started', 'time_completed']] = (
+            syncs_df.loc[:,['time_started', 'time_completed']]
+            .applymap(pd.Timestamp)
+        )
+        # (syncs_df.loc[:,'folders']
+        #     = syncs_df.loc[:,'folders']
+        #     .apply(eval)
+        # )
+        self.syncs_df = syncs_df
 
     def knows_image(self, PIL_image):
         '''
@@ -284,6 +316,7 @@ class ImageManager():
         #Record when the sync was started and completed
         self.syncs_df.loc[sync_num, 'time_started'] = time_started
         self.syncs_df.loc[sync_num, 'time_completed'] = time_completed
+        self.syncs_df.loc[sync_num, 'folders'] = repr(subdirectories)
 
         #return (time_started, time_completed)
 
