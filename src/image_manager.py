@@ -14,8 +14,8 @@ import imagehash
 
 class ImageManager():
     def __init__(self, base_directory,
-                 image_df_path = None,
-                 syncs_df_path = None,
+                 images_path = None,
+                 syncs_path = None,
                  hash_fcn = imagehash.phash,
                  hash_col = 'p_hash',
                  file_col = 'filename',
@@ -46,11 +46,11 @@ class ImageManager():
         #self.image_dict = defaultdict(list)
 
         #Initialize the image DataFrame
-        if image_df_path is None:
+        if images_path is None:
             self.image_df = pd.DataFrame(columns=columns)
             self.image_dict = {}
         else:
-            self.load_image_df(image_df_path)
+            self.load_image_df(images_path)
             self._sync_dict_with_df() #This initializes self.image_dict
 
         # if len(self.image_dict) == 0 and len(self.image_df) == 0:
@@ -64,9 +64,9 @@ class ImageManager():
         else:
             self.load_syncs_df(syncs_df_path)
 
-    # def write_dfs(self, image_df_filename, syncs_df_filename):
-    #     self.image_df.to_csv(image_df_filename, sep='|')
-    #     self.syncs_df
+    def write_dfs(self, images_filename, syncs_filename):
+        self.image_df.to_csv(images_filename, sep='|')
+        self.syncs_df.to_csv(syncs_filename, sep='|')
 
     def load_image_df(self, path):
         image_df = pd.read_csv(path, sep='|', index_col=0)
