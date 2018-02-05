@@ -6,9 +6,11 @@ import os
 from PIL import Image
 import imagehash
 
+#import datetime
+
 #from keras.preprocessing import image
 
-from collections import defaultdict
+#from collections import defaultdict
 
 class ImageManager():
     def __init__(self, base_directory,
@@ -23,7 +25,10 @@ class ImageManager():
         self.label_col = 'species'
         self.file_col = 'filename'
         self.hash_col = 'p_hash'
-        columns = [self.hash_col, self.file_col, self.label_col]
+        self.time_added_col = 'time_added'
+        self.time_verified_col = 'time_verified'
+        columns = [self.hash_col, self.file_col, self.label_col,
+                    self.time_added_col, self.time_verified_col]
 
         self.synced = False
 
@@ -32,11 +37,12 @@ class ImageManager():
         #     self.image_dict = defaultdict(list)
         # else:
         #     self.image_dict = image_dict
-        self.image_dict = defaultdict(list)
+        #self.image_dict = defaultdict(list)
 
         #Initialize the image DataFrame
         if image_df is None:
             self.image_df = pd.DataFrame(columns=columns)
+            self.image_dict = {}
         else:
             self.image_df = image_df
             self._sync_dict_with_df() #This initializes self.image_dict
@@ -163,14 +169,14 @@ class ImageManager():
         if self.synced:
             return
 
-        self.image_dict = defaultdict(list,
-             {hash_val: os.path.join(base_directory, directory, filename)
+        self.image_dict = {hash_val: os.path.join(
+             base_directory, directory, filename)
              for hash_val, directory, filename
              in zip(self.image_df[self.hash_col],
                     self.image_df[self.label_col],
                     self.image_df[self.file_col]
                     )
-            )
+            }
         self.synced = True
 
     def sync_images(self, subdirectories):
@@ -197,9 +203,18 @@ class ImageManager():
                     if os.path.splitext(dir_entry.name)[1].lower() not in self.image_extensions:
                         continue
 
-                    #Use Keras to load the image file into a PIL image object with the correct target size
-                    #for InceptionV3
-                    img = image.load_img(dir_entry.path)#, target_size=self.target_size)
+                    try:
+                        # #Use Keras to load the image file into a PIL image object with the correct target size
+                        # #for InceptionV3
+                        # img = image.load_img(dir_entry.path)#, target_size=self.target_size)
+
+                        # It shouldn't matter whether we open the image with Keras or PIL,
+                        # or whether we resize the image on opening
+                        img = Image.open(dir_entry.path)
+                    except OSError:
+                        #Print error and go to next file
+                        print("Cannot open file: {}".format(dir_entry.path))
+                        continue
 
 
                     #Refer to https://pypi.python.org/pypi/ImageHash for imagehash documentation.
@@ -209,14 +224,33 @@ class ImageManager():
                     #just to be safe.
                     hash_val = self.hash_fcn(img)
 
-                    if hash_val in self.image_dict and dir_entry.path == self.image_dict[hash_val][0]:
-                        #We already know about this image and have its correct information
-                        #in the dataframe, so move on to the next file
-                        continue
-                    else:
-                        #Image file is new, so add its path (and the hash if we don't have it)
-                        self.image_dict[hash_val].append(dir_entry.path)
+                    #Check if the dictionary contains this hash value.
+                    #If so, the image has already been added to the dataframe,
+                    #with the first path listed in the dictionary.
+                    if hash_val in self.image_dict:
+                        #If the current filepath is different from the first one listed,
+                        #we have found a duplicate, so add the new path.
+                        if dir_entry.path != self.image_dict[hash_val][0]:
+                            self.image_dict[hash_val].append(dir_entry.path)
 
+                        #At this point, we can move on to the next file, because
+                        #we know the image is already in the dataframe, and we
+                        #have recorded the new path if it was a duplicate
+                        continue
+
+                    #At this point, we know we have found a new image, so add a
+                    #new row to the dataframe recording its location.
+
+                    timestamp = pd.Timestamp.now()
+                    #Create a new row containing the data for the current file
+                    new_row = pd.Series({self.hash_col: hash_val
+                                        , self.file_col: dir_entry.name
+                                        , self.label_col: subdirectory
+                                        , self.time_added_col: timestamp
+                                        , self.time_verified_col: timestamp
+                                        })
+                    image_df.loc[row_num] = new_row
+                    row_num += 1
 
     def add_images_to_df(self,
                          label_col='species',
