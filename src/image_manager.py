@@ -12,6 +12,11 @@ import imagehash
 
 #from collections import defaultdict
 
+def _swap_elements(lst, i, j):
+    temp = lst[i]
+    lst[i] = lst[j]
+    lst[j] = temp
+
 class ImageManager():
     def __init__(self, base_directory,
                  images_path = None,
@@ -59,12 +64,14 @@ class ImageManager():
         #     self.synced = False
 
         #DataFrame to keep track of when files are synced
-        if syncs_df_path is None:
+        if syncs_path is None:
             self.syncs_df = pd.DataFrame(columns = ['time_started', 'time_completed', 'folders'])
         else:
-            self.load_syncs_df(syncs_df_path)
+            self.load_syncs_df(syncs_path)
 
-    def write_dfs(self, images_filename, syncs_filename):
+    #Yak!!!
+
+    def export_logs(self, images_filename, syncs_filename):
         self.image_df.to_csv(images_filename, sep='|')
         self.syncs_df.to_csv(syncs_filename, sep='|')
 
@@ -319,11 +326,6 @@ class ImageManager():
         self.syncs_df.loc[sync_num, 'folders'] = repr(subdirectories)
 
         #return (time_started, time_completed)
-
-    def _swap_elements(lst, i, j):
-        temp = lst[i]
-        lst[i] = lst[j]
-        lst[j] = temp
 
     def _get_folder_and_filename(image_path):
         #Get the folder path and filename from the path

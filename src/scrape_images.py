@@ -80,7 +80,7 @@ class ImageScraper():
             time.sleep(self.get_time(1))
             self.scrape_image(image, directory, search_term, i+start_index)
 
-    def search_and_scrape(self, search_terms_for_directories):
+    def search_and_scrape(self, search_terms_for_directories, target_number=800):
         for directory, search_terms in search_terms_for_directories.items():
             directory = os.path.join(self.image_manager.base_directory, directory)
             if not os.path.exists(directory):
@@ -88,7 +88,7 @@ class ImageScraper():
             for search_term in search_terms:
                 self.search_for_items(search_term)
                 n_images_scraped = 0
-                while True:
+                while n_images_scraped<target_number:
                     images = self.find_images()
                     if len(images) <= n_images_scraped:
                         break

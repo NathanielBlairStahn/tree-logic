@@ -8,9 +8,10 @@ from PIL import Image
 import imagehash
 
 from keras.applications.inception_v3 import InceptionV3
+from keras.models import Sequential, Model
 
 class ImageClassifier():
-    def __init__(self, predictor=None):
+    def __init__(self, categories):
         self.feature_extractor = InceptionV3(include_top=False
                                         , weights='imagenet'
                                         , pooling='avg')
@@ -28,23 +29,65 @@ class ImageClassifier():
         #network on the images, but I'm not sure...
         self.rescale_factor = 1.0/255
 
-        self.predictor = predictor
+        self.categories = categories
+        self.label_dict = {label: i for i, label in enumerate self.categories}
 
-    def extract_features_from_image_paths(self, image_file_df, base_directory, label_col='species', file_col='filename'):
+        self.predictor = self.simple_nn_model()
+
+    def extract_features_from_image_paths(self, image_df, base_directory, batch_size=32, label_col='species', file_col='filename'):
+
+        image_array = np.empty((batch_size, *self.target_size, 3))
+        features = np.empty((len(image_df), len(self.feature_columns)))
+
+        num_batches = len(image_df) // batch_size
+        last_batch_size = len(image_df) % batch_size
+        row_idx = 0
+
+        for batch in range(num_batches):
+            for batch_idx in range(batch_size):
+                image_path = os.path.join(base_directory,
+                    image_df.loc[row_idx, label_col],
+                    image_df.loc[row_idx, file_col])
+
+                img = image.load_img(image_path, target_size=self.target_size)
+                #The image array will contain unscaled RGB values in [0,255]
+                image_array[batch_idx] = image.img_to_array(img)
+                row_idx += 1
+
+            features[batch*batch_size: (batch+1)*batch_size)] = (
+                self.extract_features(image_array, rescale=True)
+                )
+
+        for batch_idx in range(last_batch_size):
+            image_path = os.path.join(base_directory,
+                image_df.loc[row_idx, label_col],
+                image_df.loc[row_idx, file_col])
+
+            img = image.load_img(image_path, target_size=self.target_size)
+            #The image array will contain unscaled RGB values in [0,255]
+            image_array[batch_idx] = image.img_to_array(img)
+            row_idx += 1
+
+        features[batch*batch_size:] = (
+            self.extract_features(image_array[:last_batch_size], rescale=True)
+            )
+
         #Create array to store each image as a 3-tensor
-        image_array = np.empty((len(image_df), 299, 299, 3))
+        image_array = np.empty((len(image_df), *self.target_size, 3))
         t0 = time()
-        print('Loading images...')
+        print(f'Loading images...time={t0}')
         for row_idx in image_df.index:
             image_path = os.path.join(base_directory,
                 image_df.loc[row_idx, label_col],
-                image_df.loc[row_idx,file_col])
+                image_df.loc[row_idx, file_col])
 
-            img = image.load_img(image_path, target_size=(299,299))
+            img = image.load_img(image_path, target_size=self.target_size)
             #The image array will contain unscaled RGB values in [0,255]
             image_array[row_idx] = image.img_to_array(img)
 
-        print('Images loaded. Extracting features...')
+        t1 = time()
+        print(f'Images loaded. Time={t1}'.format(t1-t0))
+        print('Extracting features...')
         #The default rescale=True will rescale RGB values to be in [0,1]
         features = self.extract_features(image_array, rescale=True)
 
@@ -53,7 +96,7 @@ class ImageClassifier():
 
         return image_df.join(features_df)
 
-    def extract_features(self, image_array, rescale=True):
+    def extract_features(self, image_array,rescale=True):
         '''
         Returns the array of feature extracted from through InceptionV3
         from an array of image data.
@@ -74,6 +117,19 @@ class ImageClassifier():
         features = self.feature_extractor.predict(image_array)
         return features
 
+    def simple_nn_model(self):
+        features = self.feature_extractor.output
+        model = Sequential()
+        model.add(BatchNormalization(input_shape=features.shape[1:]))
+        model.add(Dense(1024, activation = "relu"))
+        model.add(Dense(4, activation='softmax'))
+        model.compile(optimizer="SGD",
+            loss='categorical_crossentropy',
+            metrics=['accuracy', 'categorical_accuracy', 'top_k_categorical_accuracy'])
+        return model
+
+    def fit(self, X_train, y_train, epochs=18, batch_size=32,verbose=1):
+        self.predictor.fit(self, X_train.values, y_train.values, epochs=epochs, batch_size=batch_size,verbose=verbose)
 
 
     def predict(self, image_df):
