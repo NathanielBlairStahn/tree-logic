@@ -72,24 +72,26 @@ class ImageClassifier():
             self.extract_features(image_array[:last_batch_size], rescale=True)
             )
 
-        #Create array to store each image as a 3-tensor
-        image_array = np.empty((len(image_df), *self.target_size, 3))
-        t0 = time()
-        print(f'Loading images...time={t0}')
-        for row_idx in image_df.index:
-            image_path = os.path.join(base_directory,
-                image_df.loc[row_idx, label_col],
-                image_df.loc[row_idx, file_col])
-
-            img = image.load_img(image_path, target_size=self.target_size)
-            #The image array will contain unscaled RGB values in [0,255]
-            image_array[row_idx] = image.img_to_array(img)
-
-        t1 = time()
-        print(f'Images loaded. Time={t1}'.format(t1-t0))
-        print('Extracting features...')
-        #The default rescale=True will rescale RGB values to be in [0,1]
-        features = self.extract_features(image_array, rescale=True)
+        # #Original version without batches -- will use too much memory
+        # if df is too big...
+        # #Create array to store each image as a 3-tensor
+        # image_array = np.empty((len(image_df), *self.target_size, 3))
+        # t0 = time()
+        # print(f'Loading images...time={t0}')
+        # for row_idx in image_df.index:
+        #     image_path = os.path.join(base_directory,
+        #         image_df.loc[row_idx, label_col],
+        #         image_df.loc[row_idx, file_col])
+        #
+        #     img = image.load_img(image_path, target_size=self.target_size)
+        #     #The image array will contain unscaled RGB values in [0,255]
+        #     image_array[row_idx] = image.img_to_array(img)
+        #
+        # t1 = time()
+        # print(f'Images loaded. Time={t1}'.format(t1-t0))
+        # print('Extracting features...')
+        # #The default rescale=True will rescale RGB values to be in [0,1]
+        # features = self.extract_features(image_array, rescale=True)
 
         print('Features extracted. Returning new dataframe.')
         features_df = pd.DataFrame(features, columns=self.feature_columns)
