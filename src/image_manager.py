@@ -136,7 +136,8 @@ class ImageManager():
             if len(image_paths) > 1:
                 #Remove any image files after the first
                 for image_path in image_paths[1:]:
-                    os.remove(image_path)
+                    if os.path.exists(image_path):
+                        os.remove(image_path)
                 #Keep only first file in the dictionary
                 self.image_dict[hash_val] = image_paths[0:1]
 
@@ -307,9 +308,9 @@ class ImageManager():
 
         for h in hashes_to_update:
             #Swap the 0th filepath with the 1st
-            _swap_elements(self.image_df[h],0,1)
+            _swap_elements(self.image_dict[h],0,1)
             #Get the folder path and filename from the new path
-            folder_path, filename = os.path.split(self.image_df[h][0])
+            folder_path, filename = os.path.split(self.image_dict[h][0])
             #Strip off the base directory to get the folder name
             folder_name = os.path.basename(folder_path)
             #Update the folder and filename in DataFrame
