@@ -1,4 +1,4 @@
-# tree-logic
+# Tree Logic
 
 ## Image classification technology for tree species identification.
 
