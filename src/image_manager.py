@@ -260,8 +260,9 @@ class ImageManager():
                         #have recorded the new path if it was a duplicate
                         continue
 
-                    #At this point, we know we have found a new image, so add the path
-                    #to the dictionary, and add a new row to the dataframe for this hash.
+                    #If the hash value was NOT in the dictionary, we know we have found
+                    #a new image, so add the path to the dictionary, and add a new row
+                    #to the dataframe for this hash.
 
                     #New hash with new path
                     self.image_dict[hash_val] = [dir_entry.path]
@@ -277,6 +278,15 @@ class ImageManager():
                     self.image_df.loc[row_num] = new_row
                     row_num += 1
 
+        #After the for loop completes, we know we have accounted for every image
+        #in the given subdirectories. However, some of the paths listed in the
+        #DataFrame may still be incorrect, e.g. if an image was moved since the
+        #last sync. In particular, if an image was moved to a different path in
+        #the subdirectories we checked, we will have found the new path and stored
+        #it in the dictionary, but we still need to re-order the paths in the
+        #dictionary and update the path in the DataFrame. We need to find all
+        #images that need such an update, i.e.:
+        #
         #Find all hashes with more than one path listed in the dictionary but
         #that have not been verified during this sync. We need to update the
         #paths for these hashes because:
