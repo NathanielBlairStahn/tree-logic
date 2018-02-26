@@ -1,0 +1,3 @@
+The notebooks in this folder were created during the initial phase of the project, Jan 22 - Feb 8, 2018. They were used to develop and test code which was then refactored into .py files in the src folder.
+
+These notebooks were originally created and run in the base directory 'tree-logic'. Rerunning them will cause errors due to the relative file paths (as well as files that have been modified). Thus they serve mostly as a record of how the code was developed.
