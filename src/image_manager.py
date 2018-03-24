@@ -370,6 +370,7 @@ class ImageManager():
     #         [self.folder_col, self.file_col]] = [folder_name, filename]
 
 
+    #Copied from build_a_model.ipynb, won't work yet
     def get_image_paths(image_df, base_directory, indices=None):
         if indices is None:
             indices = image_df.index
@@ -382,6 +383,7 @@ class ImageManager():
 
         return img_paths
 
+    #Copied from build_a_model.ipynb, may or may not work...
     def generate_images_from_paths(self, img_paths):
         #return (image.load_img(path, target_size=(299,299)) for path in img_paths)
         return (Image.open(path) for path in img_paths)
