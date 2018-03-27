@@ -80,19 +80,27 @@ class ImageManager():
         image_df.loc[:,self.hash_col] = (
             image_df[self.hash_col].apply(imagehash.hex_to_hash)
             )
-        image_df.loc[:,[self.time_added_col, self.time_verified_col]] = (
-            image_df.loc[:,[self.time_added_col, self.time_verified_col]]
-            .applymap(pd.Timestamp)
+        image_df[self.time_added_col] = pd.to_datetime(
+            image_df[self.time_added_col], unit='ns'
+            )
+        image_df[self.time_verified_col] = pd.to_datetime(
+            image_df[self.time_verified_col], unit='ns'
             )
 
         self.image_df = image_df
 
     def load_syncs_df(self, path):
         syncs_df = pd.read_csv(path, sep='|', index_col=0)
-        syncs_df.loc[:,['time_started', 'time_completed']] = (
-            syncs_df.loc[:,['time_started', 'time_completed']]
-            .applymap(pd.Timestamp)
-        )
+        syncs_df['time_started'] = pd.to_datetime(
+            syncs_df['time_started'], unit='ns'
+            )
+        syncs_df['time_completed'] = pd.to_datetime(
+            syncs_df['time_completed'], unit='ns'
+            )
+        # syncs_df.loc[:,['time_started', 'time_completed']] = (
+        #     syncs_df.loc[:,['time_started', 'time_completed']]
+        #     .applymap(pd.Timestamp)
+        # )
         # (syncs_df.loc[:,'folders']
         #     = syncs_df.loc[:,'folders']
         #     .apply(eval)
