@@ -64,15 +64,31 @@ class ImageScraper():
         #and compute a hash value from we need to open the bytes by
         #first converting them using BytesIO.
         PIL_image = PIL.Image.open(io.BytesIO(image_png))
-        #Check if we have already found an image with the same hash value
+        #Check if we have already found an image with the same hash value.
+        #If so, do nothing and move onto the next image. Otherwise, we want
+        #to save the new image.
         if not self.image_manager.knows_image(PIL_image):
             label = "_".join(search_term.lower().split())
-            filepath = os.path.join(directory, f'image_{label}_{i}.png')
+            filename = f'image_{label}_{i}'
+            extension = '.png'
+            filepath = os.path.join(directory, filename + extension)
+            tries = 0
+            #If the path already exists, add a character to the end of
+            #the filename until we find a path that doesn't exist.
+            while os.path.exists(filepath) and tries<=100:
+                filename += 'a'
+                filepath = os.path.join(directory, filename + extension)
+                tries += 1
+            # filepath = os.path.join(directory, f'image_{label}_{i}.png')
             # filepath = f'{directory}/image_{label}_{i}.png'
-            with open(filepath, 'wb') as f:
-                f.write(image_png)
-            #Presumably this would also work if we wrote the PIL object...
-            #Modify this to update the manager with the image path...
+
+            #Write the new file once we have a path that works.
+            #If we didn't find one in <= 100 tries, give up and move on.
+            if tries <= 100:
+                with open(filepath, 'wb') as f:
+                    f.write(image_png)
+                # Presumably this would also work if we wrote the PIL object...
+                # Modify this to update the manager with the image path...
 
     def scrape_images(self, images, directory, search_term, start_index=0):
         for i, image in enumerate(images):
