@@ -29,8 +29,8 @@ class ImageClassifier():
         #network on the images, but I'm not sure...
         self.rescale_factor = 1.0/255
 
-        self.categories = categories
-        self.label_dict = {label: i for i, label in enumerate self.categories}
+        # self.categories = categories
+        # self.label_dict = {label: i for i, label in enumerate(self.categories)}
 
         self.predictor = self.simple_nn_model()
 
@@ -54,7 +54,7 @@ class ImageClassifier():
                 image_array[batch_idx] = image.img_to_array(img)
                 row_idx += 1
 
-            features[batch*batch_size: (batch+1)*batch_size)] = (
+            features[batch*batch_size: (batch+1)*batch_size] = (
                 self.extract_features(image_array, rescale=True)
                 )
 
