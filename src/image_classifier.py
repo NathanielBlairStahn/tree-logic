@@ -8,6 +8,7 @@ from PIL import Image
 import imagehash
 
 from keras.applications.inception_v3 import InceptionV3
+from keras.preprocessing import image
 #from keras.models import Sequential, Model
 
 class ImageClassifier():
@@ -16,7 +17,7 @@ class ImageClassifier():
                                         , weights='imagenet'
                                         , pooling='avg')
 
-        self.num_features = feature_extractor.output.shape[1].value # = 2048 for IV3
+        self.num_features = self.feature_extractor.output.shape[1].value # = 2048 for IV3
         self.feature_columns = [f'incv3_out_{i}' for i in range(self.num_features)]
 
         self.rescale_factor = 1.0/255 #To rescale RGB values to the range [0,1]
@@ -65,7 +66,7 @@ class ImageClassifier():
         #Later we can introduce a batch size greater than 1.
         #batch_size = 1
         num_images = len(image_df)
-        image_array = np.empty((1, *self.target_size, self.num_channels))
+        #image_array = np.empty((batch_size, *self.target_size, self.num_channels))
         features = np.empty((len(image_df), len(self.feature_columns)))
 
         #Get indices of the folder and file columns in image_df.
@@ -82,9 +83,11 @@ class ImageClassifier():
                                       image_df.iloc[row_num, file_idx])
 
             #Load the image using Keras.image
-            img = image.load_img(image_path, self.target_size)
-            #The image array will contain unscaled RGB values in [0,255]
-            image_array = image.img_to_array(img)
+            img = image.load_img(image_path, target_size=self.target_size)
+            #The image array will contain unscaled RGB values in [0,255].
+            #Add a dimension to the 3-D image array (299,299,3)  to make it 4-D (1,299,299,3).
+            image_array = image.img_to_array(img)[np.newaxis,:]
+            print(image_array.shape)
             #Pass the image array to the feature extractor and store the features.
             #This method will rescale the features to the range [0,1] before
             #passing them through Inception V3.
