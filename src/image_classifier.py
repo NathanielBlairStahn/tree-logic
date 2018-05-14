@@ -58,7 +58,8 @@ class ImageClassifier():
                                       image_df,
                                       base_directory,
                                       folder_col='folder',
-                                      file_col='filename'):
+                                      file_col='filename',
+                                      verbose=True):
         """Extracts features from images whose paths are stored in a DataFrame
         """
 
@@ -66,7 +67,7 @@ class ImageClassifier():
         #Later we can introduce a batch size greater than 1.
         #batch_size = 1
         num_images = len(image_df)
-        #image_array = np.empty((batch_size, *self.target_size, self.num_channels))
+        image_array = np.empty((1, *self.target_size, self.num_channels))
         features = np.empty((len(image_df), len(self.feature_columns)))
 
         #Get indices of the folder and file columns in image_df.
@@ -77,6 +78,10 @@ class ImageClassifier():
         file_idx = image_df.columns.get_loc(file_col)
 
         for row_num in range(num_images):
+            if verbose and row_num % 100 == 0:
+                timestamp = pd.Timestamp.now()
+                print(f'{row_num} images processed. Time = {timestamp}.')
+
             #Get the filepath of the current image from the dataframe.
             image_path = os.path.join(base_directory,
                                       image_df.iloc[row_num, folder_idx],
@@ -86,12 +91,16 @@ class ImageClassifier():
             img = image.load_img(image_path, target_size=self.target_size)
             #The image array will contain unscaled RGB values in [0,255].
             #Add a dimension to the 3-D image array (299,299,3)  to make it 4-D (1,299,299,3).
-            image_array = image.img_to_array(img)[np.newaxis,:]
-            print(image_array.shape)
+            image_array[0] = image.img_to_array(img)#[np.newaxis,:]
+            #print(image_array.shape)
             #Pass the image array to the feature extractor and store the features.
             #This method will rescale the features to the range [0,1] before
             #passing them through Inception V3.
             features[row_num] = self.extract_features_from_array(image_array)
+
+        if verbose:
+            timestamp = pd.Timestamp.now()
+            print(f'{row_num} images processed. Time = {timestamp}.')
 
         features_df = pd.DataFrame(features, index = image_df.index, columns=self.feature_columns)
         return image_df.join(features_df)
