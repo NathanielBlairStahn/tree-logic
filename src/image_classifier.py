@@ -9,7 +9,35 @@ import imagehash
 
 from keras.applications.inception_v3 import InceptionV3
 from keras.preprocessing import image
-#from keras.models import Sequential, Model
+from keras.models import Sequential, Model
+from keras.layers import Dense, Dropout
+from keras.layers.normalization import BatchNormalization
+from keras.regularizers import l2
+
+from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import GradientBoostingClassifier
+
+def best_logistic_regression():
+    """
+    Returns the logistic regression model that had the best performance on
+    predicting tree species from the extracted image features.
+
+    Currently returns an untrained model; I could pickle the trained model and
+    have an option to return that instead.
+    """
+    #Best parameters found so far. Performing cross-validation may find better ones.
+    return LogisticRegression(multi_class='multinomial', solver='sag', C=0.001, max_iter=2000)
+
+def best_gradient_booster():
+    """
+    Returns the gradient boosting model that had the best performance on
+    predicting tree species from the extracted image features.
+
+    Currently returns an untrained model; I could pickle the trained model and
+    have an option to return that instead.
+    """
+    #Best parameters found so far. Performing cross-validation may find better ones.
+    return GradientBoostingClassifier(learning_rate=0.01, n_estimators=200, subsample=0.5, max_depth=5)
 
 class ImageClassifier():
     def __init__(self):
@@ -24,6 +52,8 @@ class ImageClassifier():
 
         self.target_size = (299,299) #(height,width)
         self.num_channels = 3 #one channel for each color: R, G, B
+
+        self.predictor = None #self.simple_nn_model(num_categories=3)
 
     def extract_features_from_array(self, image_array, rescale=True):
         """
@@ -104,3 +134,29 @@ class ImageClassifier():
 
         features_df = pd.DataFrame(features, index = image_df.index, columns=self.feature_columns)
         return image_df.join(features_df)
+
+    def simple_nn_model(self, num_categories, hidden_units=1024):
+        features = self.feature_extractor.output
+        # print(features.shape)
+        # print(features.shape[1:])
+        # print(type(features.shape))
+        # print(tuple(features.shape[1:]))
+        input_shape = tuple(features.shape.as_list())[1:] #=(2048,)
+        model = Sequential()
+        # model.add(BatchNormalization(input_shape=input_shape))
+        model.add(Dropout(rate=0.9,input_shape=input_shape))
+        model.add(Dense(hidden_units, activation="relu", kernel_regularizer=l2(0.1)))
+        model.add(Dropout(rate=0.5))
+        # model.add(Dense(512, activation="relu"))
+        # model.add(Dropout(rate=0.5))
+        model.add(Dense(num_categories, activation='softmax', kernel_regularizer=l2(0.1)))
+        model.compile(optimizer="adam",
+            loss='categorical_crossentropy',
+            metrics=['accuracy', 'categorical_accuracy', 'top_k_categorical_accuracy'])
+        return model
+
+    def fit_predictor(self, X_train, y_train, epochs=18, batch_size=32,verbose=1):
+        self.predictor.fit(self, X_train.values, y_train.values, epochs=epochs, batch_size=batch_size,verbose=verbose)
+
+    def predict_from_features(self, X):
+        return self.predictor.predict(X.values)
