@@ -11,12 +11,6 @@ from keras.applications.inception_v3 import InceptionV3
 from keras.preprocessing import image
 #from keras.models import Sequential, Model
 
-def export_df(df, filename):
-    df.to_csv(filename, sep='|')
-
-def load_df(filename):
-    return pd.read_csv(filename, sep='|', index_col=0)
-
 class ImageClassifier():
     def __init__(self):
         self.feature_extractor = InceptionV3(include_top=False

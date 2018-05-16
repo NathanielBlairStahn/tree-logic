@@ -12,10 +12,16 @@ import imagehash
 
 #from collections import defaultdict
 
-def _swap_elements(lst, i, j):
+def swap_list_elements(lst, i, j):
     temp = lst[i]
     lst[i] = lst[j]
     lst[j] = temp
+
+def export_df(df, filepath):
+    df.to_csv(filepath, sep='|')
+
+def load_df(filepath):
+    return pd.read_csv(filepath, sep='|', index_col=0)
 
 class ImageManager():
     def __init__(self, base_directory,
@@ -72,11 +78,14 @@ class ImageManager():
     #Yak!!!
 
     def export_logs(self, images_filename, syncs_filename):
-        self.image_df.to_csv(images_filename, sep='|')
-        self.syncs_df.to_csv(syncs_filename, sep='|')
+        # self.image_df.to_csv(images_filename, sep='|')
+        # self.syncs_df.to_csv(syncs_filename, sep='|')
+        export_df(self.image_df, images_filename)
+        export_df(self.syncs_df, syncs_filename)
 
     def load_image_df(self, path):
-        image_df = pd.read_csv(path, sep='|', index_col=0)
+        # image_df = pd.read_csv(path, sep='|', index_col=0)
+        image_df = load_df(path)
         image_df.loc[:,self.hash_col] = (
             image_df[self.hash_col].apply(imagehash.hex_to_hash)
             )
@@ -326,7 +335,7 @@ class ImageManager():
 
         for h in hashes_to_update:
             #Swap the 0th filepath with the 1st
-            _swap_elements(self.image_dict[h],0,1)
+            swap_list_elements(self.image_dict[h],0,1)
             #Get the folder path and filename from the new path
             folder_path, filename = os.path.split(self.image_dict[h][0])
             #Strip off the base directory to get the folder name
