@@ -10,7 +10,7 @@ import imagehash
 from keras.applications.inception_v3 import InceptionV3
 from keras.preprocessing import image
 from keras.models import Sequential, Model
-from keras.layers import Dense, Dropout
+from keras.layers import Dense, Dropout, Activation
 from keras.layers.normalization import BatchNormalization
 from keras.regularizers import l2
 
@@ -144,12 +144,16 @@ class ImageClassifier():
         input_shape = tuple(features.shape.as_list())[1:] #=(2048,)
         model = Sequential()
         # model.add(BatchNormalization(input_shape=input_shape))
-        model.add(Dropout(rate=0.9,input_shape=input_shape))
-        model.add(Dense(hidden_units, activation="relu", kernel_regularizer=l2(0.1)))
+
+        #A do-nothing first layer to pass in the input shape
+        model.add(Dropout(rate=1.0,input_shape=input_shape))
+        model.add(Dense(hidden_units, kernel_regularizer=l2(0.001)))
+        model.add(BatchNormalization())
+        model.add(Activation("relu"))
         model.add(Dropout(rate=0.5))
         # model.add(Dense(512, activation="relu"))
-        # model.add(Dropout(rate=0.5))
-        model.add(Dense(num_categories, activation='softmax', kernel_regularizer=l2(0.1)))
+        #model.add(Dropout(rate=0.5))
+        model.add(Dense(num_categories, activation='softmax', kernel_regularizer=l2(0.001)))
         model.compile(optimizer="adam",
             loss='categorical_crossentropy',
             metrics=['accuracy', 'categorical_accuracy', 'top_k_categorical_accuracy'])
