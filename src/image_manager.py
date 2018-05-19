@@ -24,6 +24,8 @@ def load_df(filepath):
     return pd.read_csv(filepath, sep='|', index_col=0)
 
 class ImageManager():
+    # IMAGES_PATH = "image_log.csv"
+    # SYNCS_PATH = "syncs_log.csv"
     def __init__(self, base_directory,
                  images_path = None,
                  syncs_path = None,
@@ -154,6 +156,7 @@ class ImageManager():
                 #Remove any image files after the first
                 for image_path in image_paths[1:]:
                     if os.path.exists(image_path):
+                        # print("OMG! You were about to remove {image_path}!")
                         os.remove(image_path)
                 #Keep only first file in the dictionary
                 self.image_dict[hash_val] = image_paths[0:1]
