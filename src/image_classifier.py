@@ -107,6 +107,8 @@ class ImageClassifier():
         folder_idx = image_df.columns.get_loc(folder_col)
         file_idx = image_df.columns.get_loc(file_col)
 
+        start_time = pd.Timestamp.now()
+
         for row_num in range(num_images):
             if verbose and row_num % 100 == 0:
                 timestamp = pd.Timestamp.now()
@@ -130,7 +132,9 @@ class ImageClassifier():
 
         if verbose:
             timestamp = pd.Timestamp.now()
+            time_elapsed = timestamp - start_time
             print(f'{row_num} images processed. Time = {timestamp}.')
+            print(f'Total time elapsed = {time_elapsed}.')
 
         features_df = pd.DataFrame(features, index = image_df.index, columns=self.feature_columns)
         return image_df.join(features_df)
