@@ -1,0 +1,5 @@
+,Predicted acer_macrophyllum,Predicted picea_sitchensis,Predicted platanus_acerifolia,Predicted thuja_plicata
+Actual acer_macrophyllum,68,5,15,8
+Actual picea_sitchensis,11,82,2,15
+Actual platanus_acerifolia,23,5,89,3
+Actual thuja_plicata,16,11,3,87
