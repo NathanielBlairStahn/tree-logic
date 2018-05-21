@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 #from sklearn.model_selection import train_test_split
-from sklearn.metrics import log_loss, accuracy_score, confusion_matrix
+from sklearn.metrics import log_loss, accuracy_score, confusion_matrix, matthews_corrcoef
 
 class ModelEvaluator():
     def __init__(self, model): #, image_df):
@@ -13,11 +13,17 @@ class ModelEvaluator():
         y_pred_train = self.model.predict_proba(X_train)
         y_pred_test = self.model.predict_proba(X_test)
 
+        y_pred_train_cat = self.model.predict(X_train)
+        y_pred_test_cat = self.model.predict(X_test)
+
         print("Train log_loss: {}, Test log_loss: {}".format(
             log_loss(y_train, y_pred_train), log_loss(y_test, y_pred_test)))
 
-        y_pred_train_cat = self.model.predict(X_train)
-        y_pred_test_cat = self.model.predict(X_test)
+        print("Train Matthews CC: {}, Test Matthews CC: {}".format(
+                matthews_corrcoef(y_train, y_pred_train_cat),
+                matthews_corrcoef(y_test, y_pred_test_cat))
+             )
+
         print("Train accuracy: {}, Test accuracy: {}".format(
                 accuracy_score(y_train, y_pred_train_cat),
                 accuracy_score(y_test, y_pred_test_cat))
