@@ -4,10 +4,10 @@ import pandas as pd
 #from sklearn.model_selection import train_test_split
 from sklearn.metrics import log_loss, accuracy_score, confusion_matrix, matthews_corrcoef
 
-def top_k_accuracy(y_true, y_pred, classes, k=3):
-    ranked_predictions = classes[np.argsort(y_pred, axis=1)[:,-k:]]
+def top_k_accuracy(y_true, y_pred_probs, classes, k=3):
+    top_k_predictions = classes[np.argsort(y_pred_probs, axis=1)[:,-k:]]
     #print(ranked_predictions)
-    return np.array([y_true.iloc[i] in ranked_predictions[i] for i in range(len(y_true))]).mean()
+    return np.array([y_true.iloc[i] in top_k_predictions[i] for i in range(len(y_true))]).mean()
 
 class ModelEvaluator():
     def __init__(self, model): #, image_df):
