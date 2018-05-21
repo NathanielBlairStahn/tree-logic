@@ -20,6 +20,7 @@ def plot_confusion_matrix(cm, classes,
                           title='Confusion Matrix\n(Number of images by class)',
                           cmap=plt.cm.Blues,
                           fontsize=22,
+                          label_size=14,
                          colorbar=True):
     """
     This function prints and plots the confusion matrix.
@@ -34,12 +35,12 @@ def plot_confusion_matrix(cm, classes,
     print(cm)
 
     plt.imshow(cm, interpolation='nearest', cmap=cmap)
-    plt.title(title)
+    plt.title(title, fontsize=label_size+2)
     if colorbar:
         plt.colorbar()
     tick_marks = np.arange(len(classes))
-    plt.xticks(tick_marks, classes, rotation=45)
-    plt.yticks(tick_marks, classes)
+    plt.xticks(tick_marks, classes, rotation=45, fontsize=label_size)
+    plt.yticks(tick_marks, classes, fontsize=label_size)
 
     fmt = '.2f' if normalize else 'd'
     #formatter = FuncFormatter(to_percent)
@@ -51,8 +52,8 @@ def plot_confusion_matrix(cm, classes,
                  color="white" if cm[i, j] > thresh else "black")
 
     plt.tight_layout()
-    plt.ylabel('True label')
-    plt.xlabel('Predicted label')
+    plt.ylabel('True label', fontsize=label_size)
+    plt.xlabel('Predicted label', fontsize=label_size)
 
 class ModelEvaluator():
     def __init__(self, model): #, image_df):
